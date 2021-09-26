@@ -45,8 +45,9 @@ public:
 	void dbgPrint(uint8_t cmd, uint32_t value=0xff) const;
 
 private:
-	void play();
-	uint8_t _readByte();
+	void playCurrentFile();
+	void parseCommands();
+	uint8_t readByte();
 
 	GzUnpacker *m_gzip;
 	VgmReader m_vgmReader;

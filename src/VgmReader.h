@@ -59,19 +59,29 @@ public:
 
 	bool	begin();
 	uint8_t	open(char const *filePath);
+	bool	isDir(char const *pathName);
+	uint8_t	openDir(char const *dirPath);
+	bool	openNextFile();
 	void	close();
-	bool	isVgmFile();
+	bool	delFile(char const *fileName);
+	bool	isVgmFile() const;
+	char const *getFileName() const;
+	void	parseHeader();
 	byte	readByte();
-	VgmFormat getFormat(char const *filePath);
+	VgmFormat getFormat() const;
 	
 private:
-	void	_reset();
-	void	_parseHeader();
+	void	_reset();	
 	size_t	_readFromFile(uint32_t offset);
 	void	_dbgPrintBuffer();
 	/*void parseGd3Info();*/
 
 	File		m_file;
+#if defined ESP32
+	File		m_dir;
+#elif defined ESP8266	
+	Dir			m_dir;
+#endif
 	
 	uint32_t	m_gd3Offset;
 	uint32_t	m_dataOffset;
