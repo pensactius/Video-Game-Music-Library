@@ -3,16 +3,39 @@
 #include "Config.h"
 #include <Arduino.h>
 
+// The following section is taken from the ESP32-targz library
 #if defined ESP32
   #if defined DEST_FS_USES_SPIFFS
     #include <SPIFFS.h>
+	#define destFS SPIFFS
   #endif
 #elif defined ESP8266
     #if defined DEST_FS_USES_LITTLEFS
       #include <LittleFS.h>
-    #else // use core SPIFFS
+      #define destFS LittleFS
+    #elif defined DEST_FS_USES_SPIFFS
+      #if defined USE_LittleFS // emulate SPIFFS using LittleFS
+        #include <LittleFS.h>
+        #define destFS SPIFFS
+      #else // use core SPIFFS
         #include <FS.h>
-    #endif
+        #define destFS SPIFFS
+      #endif
+    #else // no destination filesystem defined in sketch
+      #warning "Unspecified or invalid destination filesystem, please #define one of these before including the library: DEST_FS_USES_SPIFFS, DEST_FS_USES_LITTLEFS, DEST_FS_USES_SD, DEST_FS_USES_PSRAMFS"
+      // however, check for USE_LittleFS as it is commonly defined since SPIFFS deprecation
+      #if defined USE_LittleFS
+        #include <LittleFS.h>
+        #define destFS LittleFS
+        #warning "Defaulting to LittleFS"
+        #define DEST_FS_USES_LITTLEFS
+      #else
+        #include <FS.h>
+        #define destFS SPIFFS
+        #warning "Defaulting to SPIFFS (soon deprecated)"
+        #define DEST_FS_USES_SPIFFS
+      #endif
+  #endif
 #endif
 
 
@@ -30,7 +53,7 @@ constexpr uint32_t LOOP_OFFSET = 0x1C;
 // Relative offset to GD3 data
 constexpr uint32_t GD3_OFFSET = 0x14;
 
-// Relative offset to VGM data stream. 
+// Relative offset to VGM data stream.
 constexpr uint32_t VGM_DATA_OFFSET = 0x34;
 
 #if defined ESP8266
@@ -69,26 +92,23 @@ public:
 	void	parseHeader();
 	byte	readByte();
 	VgmFormat getFormat() const;
-	
+
 private:
-	void	_reset();	
+	void	_reset();
 	size_t	_readFromFile(uint32_t offset);
 	void	_dbgPrintBuffer();
 	/*void parseGd3Info();*/
 
 	File		m_file;
-#if defined ESP32
+	// TODO: Use Dir object where available (ESP8266)
 	File		m_dir;
-#elif defined ESP8266	
-	Dir			m_dir;
-#endif
-	
+
 	uint32_t	m_gd3Offset;
 	uint32_t	m_dataOffset;
 	uint32_t	m_loopOffset;
 	uint32_t	m_dataLength;
 
-	uint8_t		*m_buf;//[BUFSIZE];
+	uint8_t		*m_buf;
 	uint32_t	m_bufCursor;
 	uint32_t	m_fileCursor;
 };

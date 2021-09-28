@@ -25,11 +25,7 @@ VgmReader::~VgmReader()
 bool
 VgmReader::begin()
 {
-#if defined DEST_FS_USES_SPIFFS
-	return SPIFFS.begin();
-#elif defined DEST_FS_USES_LITTLEFS
-	return LittleFS.begin();
-#endif
+	return destFS.begin();
 }
 
 uint8_t
@@ -37,11 +33,7 @@ VgmReader::open(char const *filePath)
 {
 	uint8_t error_code = ERR_NOERROR;
 
-#if defined DEST_FS_USES_SPIFFS
-	m_file = SPIFFS.open(filePath, "r");	
-#elif defined DEST_FS_USES_LITTLEFS
-	m_file = LittleFS.open(filePath, "r");
-#endif
+	m_file = destFS.open(filePath, "r");
 
 	if (!m_file)
 	{
@@ -56,11 +48,7 @@ VgmReader::isDir(char const *pathName)
 {
 	bool is_directory = false;
 
-#if defined DEST_FS_USES_SPIFFS
-	m_dir = SPIFFS.open(pathName);
-#elif defined DEST_FS_USES_LIFFLEFS
-	m_dir = LittleFS.open(pathName);
-#endif
+	m_dir = destFS.open(pathName, "r");
 	is_directory = m_dir.isDirectory();
 	if (!is_directory) m_dir.close();
 
@@ -70,17 +58,15 @@ VgmReader::isDir(char const *pathName)
 bool
 VgmReader::openNextFile()
 {
-#if defined DEST_FS_USES_SPIFFS
+	// TODO: Use Dir object where available (ESP8266?)
 	m_file = m_dir.openNextFile();
-#endif
-	
+
 	return m_file != 0;
 }
 
 char const *
 VgmReader::getFileName() const
 {
-	
 	return m_file.name();
 }
 
@@ -94,11 +80,7 @@ VgmReader::close()
 bool
 VgmReader::delFile(char const *fileName)
 {
-#if defined DEST_FS_USES_SPIFFS
-	SPIFFS.remove(fileName);
-#elif defined DEST_FS_USES_LITTLEFS
-	LittleFS.remove(fileName);
-#endif
+	return destFS.remove(fileName);
 }
 
 void
@@ -108,7 +90,7 @@ VgmReader::parseHeader()
 	m_file.seek(0);
 	m_file.read((byte*)&header, sizeof(VgmHeader));
 
-	// Store absolute offset to GD3 data	
+	// Store absolute offset to GD3 data
 	m_gd3Offset = header.gd3Offset + GD3_OFFSET;
 	Serial.printf("\tGD3 absolute offset: $%X\n", m_gd3Offset);
 
@@ -143,9 +125,9 @@ VgmReader::getFormat() const
 	if (vgmId.m0 == 0x1f && vgmId.m1 == 0x8b)
 		return VgmFormat::compressed;
 
-	else if (vgmId.m0 == 0x56 
-		&& vgmId.m1 == 0x67 
-		&& vgmId.m2 == 0x6D 
+	else if (vgmId.m0 == 0x56
+		&& vgmId.m1 == 0x67
+		&& vgmId.m2 == 0x6D
 		&& vgmId.m3 == 0x20)	// "Vgm "
 			return VgmFormat::uncompressed;
 
@@ -163,7 +145,7 @@ VgmReader::readByte()
 
 		//_dbgPrintBuffer();
 	}
-	m_fileCursor++;	
+	m_fileCursor++;
 
 	return m_buf[m_bufCursor++];
 }
@@ -197,10 +179,10 @@ void
 VgmReader::_dbgPrintBuffer()
 {
 	Serial.print("          ");
-	for (int j = 0; j < 0x10; j++) 
+	for (int j = 0; j < 0x10; j++)
 	{
 		Serial.printf("%02X  ", j);
-	}	
+	}
 	Serial.println();
 
 	byte *cursor = m_buf;
@@ -210,7 +192,7 @@ VgmReader::_dbgPrintBuffer()
 		Serial.printf("    %04X  ", row<<4);
 		for (int col = 0; col < 16; col++)
 			Serial.printf("%02X  ", *cursor++);
-			
+
 		Serial.println();
 	}
 }
