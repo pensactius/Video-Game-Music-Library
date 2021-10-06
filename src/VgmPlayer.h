@@ -35,7 +35,7 @@ class VgmPlayer
 {
 
 public:
-	VgmPlayer(Sn76489 const &);
+	VgmPlayer(Sn76489 const *);
 	~VgmPlayer();
 
 	void begin();
@@ -49,7 +49,8 @@ private:
 	void parseCommands();
 	uint8_t readByte();
 
-	GzUnpacker *m_gzip;
-	VgmReader m_vgmReader;
-	Sn76489 const &m_psgL;
+	FileSystem		m_fileFS;
+	GzUnpacker*		m_gzip_ptr;
+	VgmReader		m_vgmReader;
+	Sn76489 const*	m_psgL_ptr;
 };

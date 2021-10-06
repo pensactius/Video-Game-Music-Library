@@ -9,7 +9,7 @@ Sn76489 psg = Sn76489( 15,  2,  0,  4, 16, 17,  5, 18, 19, 21 );
 Sn76489 psg = Sn76489( D0, D1, D2, D3, D4, D5, D6, D7, D8 );
 #endif
 
-VgmPlayer psgPlayer = VgmPlayer(psg);
+VgmPlayer psgPlayer = VgmPlayer(&psg);
 
 void setup() {
 	Serial.begin(115200);
@@ -17,7 +17,7 @@ void setup() {
 	psg.begin();
 	psgPlayer.begin();
 	psgPlayer.dbgPrint();
-	
+
 	psgPlayer.play("/");
 }
 

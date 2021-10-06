@@ -4,8 +4,8 @@
 #include <ESP32-targz.h>
 
 
-VgmPlayer::VgmPlayer(Sn76489 const &psgL) :
-	m_psgL { psgL }
+VgmPlayer::VgmPlayer(Sn76489 const* psgL) :
+	m_psgL_ptr{ psgL }
 {
 
 }
@@ -22,38 +22,41 @@ VgmPlayer::begin()
 	// TODO Check error code
 	if (!tarGzFS.begin()) Serial.println("tarGzFS init failed!");
 	else {
-		m_gzip = new GzUnpacker();
-		m_gzip->haltOnError( true ); // stop on fail (manual restart/reset required)
-		m_gzip->setupFSCallbacks( targzTotalBytesFn, targzFreeBytesFn ); // prevent the partition from exploding, recommended
-		m_gzip->setGzProgressCallback( BaseUnpacker::defaultProgressCallback ); // targzNullProgressCallback or defaultProgressCallback
-		m_gzip->setLoggerCallback( BaseUnpacker::targzPrintLoggerCallback  );    // gz log verbosity
+		m_gzip_ptr = new GzUnpacker();
+		m_gzip_ptr->haltOnError( true ); // stop on fail (manual restart/reset required)
+		m_gzip_ptr->setupFSCallbacks( targzTotalBytesFn, targzFreeBytesFn ); // prevent the partition from exploding, recommended
+		m_gzip_ptr->setGzProgressCallback( BaseUnpacker::defaultProgressCallback ); // targzNullProgressCallback or defaultProgressCallback
+		m_gzip_ptr->setLoggerCallback( BaseUnpacker::targzPrintLoggerCallback  );    // gz log verbosity
 	}
-	if (!m_vgmReader.begin())
+
+	if (!m_fileFS.begin())
 	{
 		Serial.println("Error mounting file system!");
 		return;
 	}
+
+	m_vgmReader.begin(&m_fileFS);
 }
 
 
 void
 VgmPlayer::play(char const *filePath)
 {
-	if (!m_vgmReader.isDir(filePath))
+	if (!m_fileFS.isDir(filePath))
 	{
-		m_vgmReader.open(filePath);
+		m_fileFS.open(filePath);
 		playCurrentFile();
 	}
 	else
 	{
 		// filePath is root directory, traverse it and play all files
-		Serial.printf("--DIRECTORY %s--", filePath);		
+		Serial.printf("--DIRECTORY %s--", filePath);
 
-		while (m_vgmReader.openNextFile())
+		while (m_fileFS.openNextFile())
 		{
 			playCurrentFile();
 		}
-	
+
 		Serial.printf("--END OF DIRECTORY %s--", filePath);
 	}
 }
@@ -62,12 +65,12 @@ void
 VgmPlayer::playCurrentFile()
 {
 	VgmFormat format = m_vgmReader.getFormat();
-	uint8_t err = 0;
-	char const *fileName = m_vgmReader.getFileName();
+	FileError err = FileError::kNoError;
+	char const *fileName = m_fileFS.getFileName();
 	boolean tmpCreated = false;
 
 	Serial.printf("Found file %s\n", fileName);
-	
+
 	// Exit if file not recognized as VGM file
 	if (format == VgmFormat::unknown)
 	{
@@ -79,16 +82,16 @@ VgmPlayer::playCurrentFile()
 	{
 		// Decompress the VGM file to a temporary file
 		Serial.printf("Uncompressing %s", fileName);
-		if( !m_gzip->gzExpander(tarGzFS, fileName, tarGzFS, "/tmp.vgm") ) {
-    	  Serial.printf("operation failed with return code #%d", m_gzip->tarGzGetError());
+		if( !m_gzip_ptr->gzExpander(tarGzFS, fileName, tarGzFS, "/tmp.vgm") ) {
+    	  Serial.printf("operation failed with return code #%d", m_gzip_ptr->tarGzGetError());
     	}
-		err = m_vgmReader.open("/tmp.vgm");
+		err = m_fileFS.open("/tmp.vgm");
 		tmpCreated = true;
 	}
 	// Parse the uncompressed file
 	m_vgmReader.parseHeader();
 
-	if ( err != 0 )
+	if ( err != FileError::kNoError )
 	{
 		Serial.printf("Couldn't open file %s\n", fileName);
 	}
@@ -96,19 +99,21 @@ VgmPlayer::playCurrentFile()
 	{
 		Serial.printf("Playing %s\n", fileName);
 		parseCommands();
-		
-		m_vgmReader.close();
-		if (tmpCreated) 
+
+		m_fileFS.close();
+		m_vgmReader.end();
+
+		if (tmpCreated)
 		{
 			Serial.println("Deleting /tmp.vgm");
-			m_vgmReader.delFile("/tmp.vgm");
+			m_fileFS.delFile("/tmp.vgm");
 		}
 	}
 }
 
 void VgmPlayer::dbgPrint() const
 {
-	m_psgL.dbgPrint();
+	m_psgL_ptr->dbgPrint();
 }
 
 void VgmPlayer::dbgPrint(uint8_t cmd, uint32_t value) const
@@ -124,7 +129,7 @@ void VgmPlayer::dbgPrint(uint8_t cmd, uint32_t value) const
 		Serial.println("WAIT60TH");
 		break;
 
-	case 0x61:	
+	case 0x61:
 	case 0x70:
 	case 0x71:
 	case 0x72:
@@ -158,7 +163,7 @@ void VgmPlayer::dbgPrint(uint8_t cmd, uint32_t value) const
 ///////////////////////////////////////////////////////////////////
 uint8_t VgmPlayer::readByte()
 {
-	return m_vgmReader.readByte();
+	return m_fileFS.readByte();
 }
 
 void
@@ -166,11 +171,11 @@ VgmPlayer::parseCommands()
 {
 	bool endOfSoundData = false;
 
-	while (!endOfSoundData) 
+	while (!endOfSoundData)
 	{
 		uint8_t cmd = readByte();
 		/*Serial.write('$');
-		Serial.print(cmd, HEX); 
+		Serial.print(cmd, HEX);
 		Serial.write(':');*/
 
 		switch (cmd)
@@ -178,21 +183,21 @@ VgmPlayer::parseCommands()
 			uint8_t dd;
 
 		// 0x4F dd (TODO - NOT IMPLEMENTED)
-		// Game Gear PSG stereo, write dd to port 0x06 
-		case 0x4f:			
+		// Game Gear PSG stereo, write dd to port 0x06
+		case 0x4f:
 			readByte();
 			break;
 		// 0x50 dd
 		// SN76489 Write dd value
 		case 0x50:
 			dd = readByte();
-			m_psgL.writeData(dd);
+			m_psgL_ptr->writeData(dd);
 			//dbgPrint(cmd, dd);
 			break;
 
-		// 0x61 nn nn 
-		// Wait n samples, n can range from 0 to 65535 (approx 1.49 seconds). 
-		// Longer pauses than this are represented by multiple wait commands. 
+		// 0x61 nn nn
+		// Wait n samples, n can range from 0 to 65535 (approx 1.49 seconds).
+		// Longer pauses than this are represented by multiple wait commands.
 		case 0x61:
 		{
 			uint8_t lo = readByte();
@@ -215,10 +220,10 @@ VgmPlayer::parseCommands()
 		case 0x63:
 			delayMicroseconds(WAIT50TH);
 			//dbgPrint(cmd);
-			break;			
+			break;
 
 		// 0x7n
-		// wait n+1 samples, n can range from 0 to 15. 
+		// wait n+1 samples, n can range from 0 to 15.
 		case  0x70:delayMicroseconds(WAIT1SAMPLE);  /*dbgPrint(cmd, WAIT1SAMPLE);*/break;
 		case  0x71:delayMicroseconds(WAIT2SAMPLE);  /*dbgPrint(cmd, WAIT2SAMPLE);*/break;
 		case  0x72:delayMicroseconds(WAIT3SAMPLE);  /*dbgPrint(cmd, WAIT3SAMPLE);*/break;
@@ -247,5 +252,5 @@ VgmPlayer::parseCommands()
 		}
 	}
 
-	m_psgL.muteAll();
+	m_psgL_ptr->muteAll();
 }
