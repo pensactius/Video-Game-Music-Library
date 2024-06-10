@@ -35,7 +35,7 @@ class VgmPlayer
 {
 
 public:
-	VgmPlayer(Sn76489 const &);
+	VgmPlayer(Sn76489* psgL = nullptr, Sn76489* psgR = nullptr, Ym2413* ym2413);
 	~VgmPlayer();
 
 	void begin();
@@ -51,5 +51,7 @@ private:
 
 	GzUnpacker *m_gzip;
 	VgmReader m_vgmReader;
-	Sn76489 const &m_psgL;
+	Sn76489 *m_psgL;
+	Sn76489 *m_psgR;
+	Ym2413 *m_ym2413;
 };

@@ -4,8 +4,10 @@
 #include <ESP32-targz.h>
 
 
-VgmPlayer::VgmPlayer(Sn76489 const &psgL) :
-	m_psgL { psgL }
+VgmPlayer::VgmPlayer(Sn76489* psgL, Sn76489* psgR, Ym2413* ym2413) :
+	m_psgL { psgL },
+	m_psgR { psgR },
+	m_ym2413 { ym2413 }
 {
 
 }
@@ -16,8 +18,7 @@ VgmPlayer::~VgmPlayer()
 }
 
 // TODO: return error codes
-void
-VgmPlayer::begin()
+void VgmPlayer::begin()
 {
 	// TODO Check error code
 	if (!tarGzFS.begin()) Serial.println("tarGzFS init failed!");
@@ -35,9 +36,7 @@ VgmPlayer::begin()
 	}
 }
 
-
-void
-VgmPlayer::play(char const *filePath)
+void VgmPlayer::play(char const *filePath)
 {
 	if (!m_vgmReader.isDir(filePath))
 	{
@@ -58,8 +57,7 @@ VgmPlayer::play(char const *filePath)
 	}
 }
 
-void
-VgmPlayer::playCurrentFile()
+void VgmPlayer::playCurrentFile()
 {
 	VgmFormat format = m_vgmReader.getFormat();
 	uint8_t err = 0;
@@ -108,7 +106,12 @@ VgmPlayer::playCurrentFile()
 
 void VgmPlayer::dbgPrint() const
 {
-	m_psgL.dbgPrint();
+	if (m_psgL)
+		m_psgL->dbgPrint();
+	if (m_psgR)
+		m_psgR->dbgPrint();
+	if (m_ym2413)
+		m_ym2413->dbgPrint();
 }
 
 void VgmPlayer::dbgPrint(uint8_t cmd, uint32_t value) const
@@ -161,8 +164,7 @@ uint8_t VgmPlayer::readByte()
 	return m_vgmReader.readByte();
 }
 
-void
-VgmPlayer::parseCommands()
+void VgmPlayer::parseCommands()
 {
 	bool endOfSoundData = false;
 
@@ -186,7 +188,7 @@ VgmPlayer::parseCommands()
 		// SN76489 Write dd value
 		case 0x50:
 			dd = readByte();
-			m_psgL.writeData(dd);
+			m_psgL->writeData(dd);
 			//dbgPrint(cmd, dd);
 			break;
 
@@ -247,5 +249,5 @@ VgmPlayer::parseCommands()
 		}
 	}
 
-	m_psgL.muteAll();
+	m_psgL->muteAll();
 }
