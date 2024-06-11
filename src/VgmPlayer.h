@@ -1,5 +1,6 @@
 #pragma once
 #include <Sn76489.h>
+#include <Ym2413.h>
 #include "VgmReader.h"
 
 // delay in microseconds for n+1 sample
@@ -35,7 +36,7 @@ class VgmPlayer
 {
 
 public:
-	VgmPlayer(Sn76489* psgL = nullptr, Sn76489* psgR = nullptr, Ym2413* ym2413);
+	VgmPlayer(Sn76489* psgL = nullptr, Sn76489* psgR = nullptr, Ym2413* ym2413 = nullptr);
 	~VgmPlayer();
 
 	void begin();
