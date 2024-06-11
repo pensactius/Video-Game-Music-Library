@@ -19,6 +19,14 @@ VgmPlayer::~VgmPlayer()
 // TODO: return error codes
 void VgmPlayer::begin()
 {
+	// Initialize chips
+	if (m_psgL)
+		m_psgL->begin();
+	if (m_psgR)
+		m_psgR->begin();
+	if (m_ym2413)
+		m_ym2413->begin();
+	
 	// TODO Check error code
 	if (!tarGzFS.begin()) Serial.println("tarGzFS init failed!");
 	else {
