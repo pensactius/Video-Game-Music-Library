@@ -1,5 +1,6 @@
 #pragma once
 
+// Set **destination** filesystem by uncommenting one of these:
 #define DEST_FS_USES_SPIFFS
 //#define DEST_FS_USES_LITTLEFS
 //#define DEST_FS_USES_SD

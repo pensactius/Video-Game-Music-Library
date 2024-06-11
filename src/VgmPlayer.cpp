@@ -1,5 +1,4 @@
 #include "VgmPlayer.h"
-// Set **destination** filesystem by uncommenting one of these:
 #include "config.h"
 #include <ESP32-targz.h>
 
@@ -178,6 +177,7 @@ void VgmPlayer::parseCommands()
 		switch (cmd)
 		{
 			uint8_t dd;
+			uint8_t aa;
 
 		// 0x4F dd (TODO - NOT IMPLEMENTED)
 		// Game Gear PSG stereo, write dd to port 0x06 
@@ -190,6 +190,13 @@ void VgmPlayer::parseCommands()
 			dd = readByte();
 			m_psgL->writeData(dd);
 			//dbgPrint(cmd, dd);
+			break;
+
+		// 0x51 aa dd: YM2413, write value dd to register aa
+		case 0x51:
+			aa = readByte();
+			dd = readByte();
+			m_ym2413->writeData(aa, dd);
 			break;
 
 		// 0x61 nn nn 
