@@ -1,13 +1,11 @@
 #include <Arduino.h>
 #include "VgmPlayer.h"
 
-//                     LSB                     MSB
-//                     D7  D6  D5  D4  D3  D2  D1  D0 ~WE ~CE
-#if defined ESP32
+// In the Sound Chip Library the MSB is right: D7 is MSB,
+// but chip sn76489 has data pins reversed, D0 is MSB!
+//                     MSB                     LSB
+//                     D0  D1  D2  D3  D4  D5  D6  D7 ~WE ~CE
 Sn76489 psg = Sn76489( 15,  2,  0,  4, 16, 17,  5, 18, 19, 21 );
-#elif defined ESP8266
-Sn76489 psg = Sn76489( D0, D1, D2, D3, D4, D5, D6, D7, D8 );
-#endif
 
 // Create a VGM player with only one PSG chip
 VgmPlayer psgPlayer = VgmPlayer(&psg);
