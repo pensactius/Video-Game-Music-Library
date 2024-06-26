@@ -1,7 +1,7 @@
 #pragma once
+#include "VgmReader.h"
 #include <Sn76489.h>
 #include <Ym2413.h>
-#include "VgmReader.h"
 
 // delay in microseconds for n+1 sample
 // for i in range(1,17):
@@ -32,27 +32,28 @@ constexpr uint32_t WAIT50TH = 20000;
 // Forward declaration GzUnpacker class (handles gzip decompression)
 class GzUnpacker;
 
-class VgmPlayer
-{
+class VgmPlayer {
 
 public:
-	VgmPlayer(Sn76489* psgL = nullptr, Sn76489* psgR = nullptr, Ym2413* ym2413 = nullptr);
-	~VgmPlayer();
+    VgmPlayer(Sn76489* psgL = nullptr, Sn76489* psgR = nullptr, Ym2413* ym2413 = nullptr);
+    ~VgmPlayer();
 
-	void begin();
-	void play(char const *filePath);
-
-	void dbgPrint() const;
-	void dbgPrint(uint8_t cmd, uint32_t value=0xff) const;
+    void begin();
+    void play(char const* filePath);
 
 private:
-	void playCurrentFile();
-	void parseCommands();
-	uint8_t readByte();
+    void playCurrentFile();
+    void parseCommands();
+    void dbgPrint() const;
+    void dbgPrint(uint8_t cmd) const;
+    void dbgPrint(uint8_t cmd, uint8_t value) const;
+    void dbgPrint(uint8_t cmd, uint32_t value) const;
+    void dbgPrint(uint8_t cmd, uint8_t aa, uint8_t dd) const;
+    uint8_t readByte();
 
-	GzUnpacker *m_gzip;
-	VgmReader m_vgmReader;
-	Sn76489 *m_psgL;
-	Sn76489 *m_psgR;
-	Ym2413 *m_ym2413;
+    GzUnpacker* m_gzip;
+    VgmReader m_vgmReader;
+    Sn76489* m_psgL;
+    Sn76489* m_psgR;
+    Ym2413* m_ym2413;
 };

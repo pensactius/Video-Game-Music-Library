@@ -1,26 +1,24 @@
-#include <Arduino.h>
 #include "VgmPlayer.h"
+#include <Arduino.h>
 
 //                     LSB                     MSB
 //                     D7  D6  D5  D4  D3  D2  D1  D0 ~WE ~CE
-#if defined ESP32
-Sn76489 psg = Sn76489( 15,  2,  0,  4, 16, 17,  5, 18, 19, 21 );
-#elif defined ESP8266
-Sn76489 psg = Sn76489( D0, D1, D2, D3, D4, D5, D6, D7, D8 );
-#endif
+Sn76489 psg = Sn76489 { 19, 18, 17, 16, 15, 14, 13, 12, 5, 4 };
 
-VgmPlayer psgPlayer = VgmPlayer(psg);
+VgmPlayer psgPlayer = VgmPlayer(&psg, nullptr, nullptr);
 
-void setup() {
-	Serial.begin(115200);
+void setup()
+{
+    Serial.begin(115200);
 
-	psg.begin();
-	psgPlayer.begin();
-	psgPlayer.dbgPrint();
-	
-	psgPlayer.play("/");
+    Serial.printf("Running at %iMhz\n", getCpuFrequencyMhz());
+    psg.begin();
+    psgPlayer.begin();
+
+    psgPlayer.play("/sn76489/");
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop()
+{
+    // put your main code here, to run repeatedly:
 }

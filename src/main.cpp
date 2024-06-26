@@ -1,25 +1,26 @@
-#include <Arduino.h>
 #include "VgmPlayer.h"
+#include <Arduino.h>
 
-// In the Sound Chip Library the MSB is right: D7 is MSB,
-// but chip sn76489 has data pins reversed, D0 is MSB!
-//                     MSB                     LSB
-//                     D0  D1  D2  D3  D4  D5  D6  D7 ~WE ~CE
-Sn76489 psg = Sn76489( 15,  2,  0,  4, 16, 17,  5, 18, 19, 21 );
-Sn76489 psgR = Sn76489( 15,  2,  0,  4, 16, 17,  5, 18, 32, 33 );
+//                     LSB                     MSB
+//                     D7  D6  D5  D4  D3  D2  D1  D0 ~WE ~CE
+Sn76489 psg = Sn76489 { 19, 18, 17, 16, 15, 14, 13, 12, 5, 4 };
 
-// Create a VGM player with two PSG chips
-VgmPlayer psgPlayer = VgmPlayer(&psg, &psgR);
+VgmPlayer psgPlayer = VgmPlayer(&psg, nullptr, nullptr);
 
-void setup() {
-	Serial.begin(115200);
+void setup()
+{
+    Serial.begin(115200);
 
-	psgPlayer.begin();
-	psgPlayer.dbgPrint();
-	
-	psgPlayer.play("/");
+    Serial.printf("Running at %iMhz\n", getCpuFrequencyMhz());
+    psg.begin();
+    psgPlayer.begin();
+
+    psgPlayer.play("/sn76489/Aladdin02.vgm");
+    psgPlayer.play("/sn76489/Defender2.vgz");
+    psgPlayer.play("/sn76489/DuckTales.vgz");
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void loop()
+{
+    // put your main code here, to run repeatedly:
 }
