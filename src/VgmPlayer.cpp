@@ -13,7 +13,6 @@ VgmPlayer::~VgmPlayer()
 {
 }
 
-// TODO: return error codes
 void VgmPlayer::begin()
 {
     // Initialize chips
@@ -50,20 +49,6 @@ void VgmPlayer::begin()
 void VgmPlayer::play(const char* filePath)
 {
     m_vgmReader.open(filePath);
-    /*if (!m_vgmReader.isDir()) {
-        m_vgmReader.open(filePath);
-        playCurrentFile();
-    } else {
-        // filePath is root directory, traverse it and play all files
-        Serial.printf("--DIRECTORY %s--", filePath);
-
-        // FIXME!!
-        while (m_vgmReader.openNextFile()) {
-            playCurrentFile();
-        }
-
-        Serial.printf("--END OF DIRECTORY %s--", filePath);
-    }*/
     if (m_vgmReader.isDir()) {
         playDir(filePath);
     } else {
@@ -71,9 +56,10 @@ void VgmPlayer::play(const char* filePath)
     }
 }
 
-void VgmPlayer::playDir(const char* dirName) {
-    m_vgmReader.openDir(dirName);    
-    m_vgmReader.openNextFile();    
+void VgmPlayer::playDir(const char* dirName)
+{
+    m_vgmReader.openDir(dirName);
+    m_vgmReader.openNextFile();
     while (m_vgmReader.isValid()) {
         if (m_vgmReader.isDir()) {
             // FIXME: avoid infinite recursion
@@ -90,7 +76,7 @@ void VgmPlayer::playCurrentFile()
     VgmFormat format = m_vgmReader.getFormat();
     uint8_t err = 0;
     char const* fileName = m_vgmReader.getPath();
-    //boolean tmpCreated = false;
+    // boolean tmpCreated = false;
 
     Serial.printf("Found file %s\n", fileName);
 
@@ -109,7 +95,7 @@ void VgmPlayer::playCurrentFile()
         // close original file and open tmp file
         m_vgmReader.close();
         err = m_vgmReader.open("/tmp.vgm");
-        //tmpCreated = true;
+        // tmpCreated = true;
     }
     // Parse the uncompressed file
     m_vgmReader.parseHeader();
