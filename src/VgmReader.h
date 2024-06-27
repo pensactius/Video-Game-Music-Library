@@ -79,7 +79,6 @@ public:
     void openNextFile();
     void close();
     void delFile(char const* fileName);
-    bool isVgmFile() const;
     char const* getPath() const;
     void parseHeader();
     byte readByte();
