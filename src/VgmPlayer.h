@@ -39,10 +39,11 @@ public:
     ~VgmPlayer();
 
     void begin();
-    void play(char const* filePath);
+    void play(const char* filePath);
+    void playDir(const char* dirName);
+    void playCurrentFile();
 
 private:
-    void playCurrentFile();
     void parseCommands();
     void dbgPrint() const;
     void dbgPrint(uint8_t cmd) const;

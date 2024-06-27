@@ -36,9 +36,9 @@ uint8_t VgmReader::open(char const* filePath)
     uint8_t error_code = ERR_NOERROR;
 
 #if defined DEST_FS_USES_SPIFFS
-    m_file = SPIFFS.open(filePath, "r");
+    m_file = SPIFFS.open(filePath);
 #elif defined DEST_FS_USES_LITTLEFS
-    m_file = LittleFS.open(filePath, "r");
+    m_file = LittleFS.open(filePath);
 #endif
 
     if (!m_file) {
@@ -48,9 +48,28 @@ uint8_t VgmReader::open(char const* filePath)
     return error_code;
 }
 
+void VgmReader::openDir(const char* dirName)
+{
+    Serial.printf("DIR - %s", dirName);
+#if defined DEST_FS_USES_SPIFFS
+    m_dir = SPIFFS.open(dirName);
+#elif defined DEST_FS_USES_LITTLEFS
+    m_dir = LittleFS.open(dirName);
+#endif
+    if (!m_dir) {
+        Serial.printf("- failed to open directory %s\n", dirName);
+        return;
+    }
+}
+
+bool VgmReader::isValid()
+{
+    return (m_file != 0);
+}
+
 bool VgmReader::isDir()
 {
-    bool is_directory = false;
+    // bool is_directory = false;
     /*
     #if defined DEST_FS_USES_SPIFFS
             m_file = SPIFFS.open(pathName);
@@ -66,14 +85,12 @@ bool VgmReader::isDir()
     return m_file.isDirectory();
 }
 
-bool VgmReader::openNextFile()
+void VgmReader::openNextFile()
 {
-    m_file = m_file.openNextFile();
-
-    return m_file != 0;
+    m_file = m_dir.openNextFile();
 }
 
-char const* VgmReader::getFileName() const
+char const* VgmReader::getPath() const
 {
 
     return m_file.path();
@@ -85,7 +102,7 @@ void VgmReader::close()
     _reset();
 }
 
-bool VgmReader::delFile(char const* fileName)
+void VgmReader::delFile(char const* fileName)
 {
 #if defined DEST_FS_USES_SPIFFS
     SPIFFS.remove(fileName);

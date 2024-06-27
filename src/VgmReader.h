@@ -17,9 +17,11 @@ constexpr uint8_t ERR_OPENFILE = 1;
 constexpr uint8_t ERR_FILEUNKNOWN = 2;
 
 // Possible VGM file types
-enum class VgmFormat { unknown,
+enum class VgmFormat {
+    unknown,
     compressed,
-    uncompressed };
+    uncompressed
+};
 
 // Relative offset to loop point
 constexpr uint32_t LOOP_OFFSET = 0x1C;
@@ -48,38 +50,38 @@ struct VgmHeader {
 };
 
 class VgmReader {
+private:
+    File m_file;
+    File m_dir;
+
+    uint32_t m_gd3Offset;
+    uint32_t m_dataOffset;
+    uint32_t m_loopOffset;
+    uint32_t m_dataLength;
+    uint8_t* m_buf;
+    uint32_t m_bufCursor;
+    uint32_t m_fileCursor;
+
+    void _reset();
+    size_t _readFromFile(uint32_t offset);
+    void _dbgPrintBuffer();
+    /*void parseGd3Info();*/
 
 public:
     VgmReader();
     ~VgmReader();
 
     bool begin();
-    uint8_t open(char const* filePath);
+    uint8_t open(const char* filePath);
+    void openDir(const char* dirName);
+    bool isValid();
     bool isDir();
-    uint8_t openDir(char const* dirPath);
-    bool openNextFile();
+    void openNextFile();
     void close();
-    bool delFile(char const* fileName);
+    void delFile(char const* fileName);
     bool isVgmFile() const;
-    char const* getFileName() const;
+    char const* getPath() const;
     void parseHeader();
     byte readByte();
     VgmFormat getFormat() const;
-
-private:
-    void _reset();
-    size_t _readFromFile(uint32_t offset);
-    void _dbgPrintBuffer();
-    /*void parseGd3Info();*/
-
-    File m_file;
-
-    uint32_t m_gd3Offset;
-    uint32_t m_dataOffset;
-    uint32_t m_loopOffset;
-    uint32_t m_dataLength;
-
-    uint8_t* m_buf; //[BUFSIZE];
-    uint32_t m_bufCursor;
-    uint32_t m_fileCursor;
 };
