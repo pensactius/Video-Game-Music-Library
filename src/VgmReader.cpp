@@ -3,6 +3,8 @@
 
 VgmReader::VgmReader()
     : m_file { 0 }
+    , m_dir { 0 }
+    , m_fs { LittleFS }
     , m_gd3Offset { 0 }
     , m_dataOffset { 0 }
     , m_loopOffset { 0 }
@@ -25,8 +27,10 @@ VgmReader::~VgmReader()
 bool VgmReader::begin()
 {
 #if defined DEST_FS_USES_SPIFFS
+    m_fs = SPIFFS;
     return SPIFFS.begin();
 #elif defined DEST_FS_USES_LITTLEFS
+    m_fs = LittleFS;
     return LittleFS.begin(true);
 #endif
 }
@@ -34,28 +38,19 @@ bool VgmReader::begin()
 uint8_t VgmReader::open(char const* filePath)
 {
     uint8_t error_code = ERR_NOERROR;
-
-#if defined DEST_FS_USES_SPIFFS
-    m_file = SPIFFS.open(filePath);
-#elif defined DEST_FS_USES_LITTLEFS
-    m_file = LittleFS.open(filePath);
-#endif
+    m_file = m_fs.open(filePath);
 
     if (!m_file) {
         error_code = ERR_OPENFILE;
     }
-
     return error_code;
 }
 
 void VgmReader::openDir(const char* dirName)
 {
     Serial.printf("DIR - %s", dirName);
-#if defined DEST_FS_USES_SPIFFS
-    m_dir = SPIFFS.open(dirName);
-#elif defined DEST_FS_USES_LITTLEFS
-    m_dir = LittleFS.open(dirName);
-#endif
+    m_dir = m_fs.open(dirName);
+
     if (!m_dir) {
         Serial.printf("- failed to open directory %s\n", dirName);
         return;
@@ -69,19 +64,6 @@ bool VgmReader::isValid()
 
 bool VgmReader::isDir()
 {
-    // bool is_directory = false;
-    /*
-    #if defined DEST_FS_USES_SPIFFS
-            m_file = SPIFFS.open(pathName);
-    #elif defined DEST_FS_USES_LIFFLEFS
-            m_file = LittleFS.open(pathName);
-    #endif
-            is_directory = m_file.isDirectory();
-            if (!is_directory) m_file.close();
-
-            return is_directory;
-        */
-
     return m_file.isDirectory();
 }
 
@@ -104,11 +86,7 @@ void VgmReader::close()
 
 void VgmReader::delFile(char const* fileName)
 {
-#if defined DEST_FS_USES_SPIFFS
-    SPIFFS.remove(fileName);
-#elif defined DEST_FS_USES_LITTLEFS
-    LittleFS.remove(fileName);
-#endif
+    m_fs.remove(fileName);
 }
 
 void VgmReader::parseHeader()

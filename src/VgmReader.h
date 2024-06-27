@@ -53,6 +53,7 @@ class VgmReader {
 private:
     File m_file;
     File m_dir;
+    fs::FS m_fs;
 
     uint32_t m_gd3Offset;
     uint32_t m_dataOffset;
