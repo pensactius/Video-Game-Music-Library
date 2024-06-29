@@ -48,11 +48,14 @@ void VgmPlayer::begin()
 
 void VgmPlayer::play(const char* filePath)
 {
-    m_vgmReader.open(filePath);
-    if (m_vgmReader.isDir()) {
-        playDir(filePath);
+    if (m_vgmReader.open(filePath) == ERR_NOERROR) {
+        if (m_vgmReader.isDir()) {
+            playDir(filePath);
+        } else {
+            playCurrentFile();
+        }
     } else {
-        playCurrentFile();
+        Serial.printf("Error VgmPlayer:51 - open %s\n", filePath);
     }
 }
 
