@@ -18,16 +18,14 @@ void VgmPlayer::begin()
     // Initialize chips
     if (m_psgL) {
         m_psgL->begin();
-        m_psgL->muteAll();
     }
     if (m_psgR) {
         m_psgR->begin();
-        m_psgR->muteAll();
     }
     if (m_ym2413) {
         m_ym2413->begin();
-        m_ym2413->muteAll();
     }
+    muteAudioChips();
 
     dbgPrint();
     // TODO Check error code
@@ -78,8 +76,8 @@ void VgmPlayer::playCurrentFile()
 {
     VgmFormat format = m_vgmReader.getFormat();
     uint8_t err = 0;
-    char const* fileName = m_vgmReader.getPath();
-    // boolean tmpCreated = false;
+    const char* fileName = m_vgmReader.getPath();
+    boolean tmpCreated = false;
 
     Serial.printf("Found file %s\n", fileName);
 
@@ -88,6 +86,8 @@ void VgmPlayer::playCurrentFile()
         Serial.printf("Error opening %s, file unknown", fileName);
         return;
     }
+
+    Serial.printf("Playing %s\n", fileName);
     // Uncompress the file to a temporary if it's a compressed VGM
     if (format == VgmFormat::compressed) {
         // Decompress the VGM file to a temporary file
@@ -97,24 +97,23 @@ void VgmPlayer::playCurrentFile()
         }
         // close original file and open tmp file
         m_vgmReader.close();
-        err = m_vgmReader.open("/tmp.vgm");
-        // tmpCreated = true;
+        err = m_vgmReader.open("/tmp.vgm");   
+        tmpCreated = true;
     }
     // Parse the uncompressed file
     m_vgmReader.parseHeader();
 
     if (err != 0) {
         Serial.printf("Couldn't open file %s\n", fileName);
-    } else {
-        Serial.printf("Playing %s\n", fileName);
+    } else {        
         parseCommands();
 
         m_vgmReader.close();
-        /*if (tmpCreated) {
+        if (tmpCreated) {
             Serial.println("Deleting /tmp.vgm");
             m_vgmReader.delFile("/tmp.vgm");
-            // FIXME: guru mediation
-        }*/
+        }
+        muteAudioChips();
     }
 }
 
@@ -248,6 +247,13 @@ void VgmPlayer::parseCommands()
     }
 
     m_psgL->muteAll();
+}
+
+void VgmPlayer::muteAudioChips()
+{
+    if (m_psgL) m_psgL->muteAll();
+    if (m_psgR) m_psgR->muteAll();
+    if (m_ym2413) m_ym2413->muteAll();
 }
 
 void VgmPlayer::dbgPrint() const

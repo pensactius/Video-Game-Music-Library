@@ -45,6 +45,7 @@ public:
 
 private:
     void parseCommands();
+    void muteAudioChips();
     void dbgPrint() const;
     void dbgPrint(uint8_t cmd) const;
     void dbgPrint(uint8_t cmd, uint8_t value) const;

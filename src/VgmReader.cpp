@@ -86,7 +86,9 @@ void VgmReader::close()
 
 void VgmReader::delFile(char const* fileName)
 {
-    m_fs.remove(fileName);
+    if (!m_fs.remove(fileName)) {
+        Serial.printf("Error - VgmReader.cpp:89 delete %s\n", fileName);
+    }
 }
 
 void VgmReader::parseHeader()
